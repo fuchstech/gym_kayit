@@ -1,15 +1,22 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'dsiarayüz.ui'
-#
-# Created by: PyQt5 UI code generator 5.9.2
-#
-# WARNING! All changes made in this file will be lost!
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import date
 from threading import Thread
 import pandas as pd
+from time import sleep
+import logging
+try:
+    with open("programlog.log","r") as f:
+        pass
+except IOError:
+    with open("programlog.log","w") as f:
+        pass
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO,
+    filename="programlog.log"
+)
+logger = logging.getLogger(__name__)
+logging.info("program %s: starting", "Dsi-kayit")
+
 data_path = "uye_kayitlari.xlsx"
 uyedf = pd.read_excel(data_path, index_col=None)
 class Ui_MainWindow(object):
@@ -102,6 +109,12 @@ class Ui_MainWindow(object):
         font.setPointSize(15)
         self.label_5.setFont(font)
         self.label_5.setObjectName("label_5")
+        self.label_7 = QtWidgets.QLabel(self.centralwidget)
+        self.label_7.setGeometry(QtCore.QRect(0, 210, 220, 41))
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        self.label_7.setFont(font)
+        self.label_7.setObjectName("label_7")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 613, 22))
@@ -157,7 +170,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Dsi Üye Kayıt"))
         self.label.setText(_translate("MainWindow", "Üye İsim"))
         self.label_2.setText(_translate("MainWindow", "Üye Soyisim"))
         self.label_3.setText(_translate("MainWindow", "Üyelik Başlangıç"))
@@ -168,21 +181,45 @@ class Ui_MainWindow(object):
         self.label_5.setText(_translate("MainWindow", "        Tel No"))
         self.checkBox_3.setText(_translate("MainWindow", "6 Aylık"))
         self.checkBox_4.setText(_translate("MainWindow", "Yıllık"))
+        self.label_7.setText(_translate("MainWindow",""))
     def kayit_t(self):
         k = Thread(target=self.kayit)
         k.start()
     def kayit(self):
+        _translate = QtCore.QCoreApplication.translate
         #yeni_df["Üyelik Başlangıç Tarihi"] = 
         #yeni_df["Üyelik Bitiş Tarihi"] = 
         #yeni_df["Telefon Numarası"] = 
-        df_dict = {"İsim Soyisim" : self.lineEdit.text()+" "+self.lineEdit_2.text(),
-"Üyelik Başlangıç Tarihi": str(self.gun[0])+"-"+str(self.gun[1])+"-"+str(self.gun[2]),
-"Üyelik Bitiş Tarihi" :str(self.bitis_gun[0])+"-"+str(self.bitis_gun[1])+"-"+str(self.bitis_gun[2]),
-"Telefon Numarası": str(self.lineEdit_3.text())}
-        yeni_df = pd.DataFrame(df_dict,index=[0])
-        son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
-        son_df.to_excel(data_path)
-        print(son_df)
+        ad1 = self.lineEdit.text()
+        ad2 = self.lineEdit_2.text()
+        baslangic = str(self.gun[0])+"-"+str(self.gun[1])+"-"+str(self.gun[2])
+        bitis = str(self.bitis_gun[0])+"-"+str(self.bitis_gun[1])+"-"+str(self.bitis_gun[2])
+        telno = str(self.lineEdit_3.text())
+        if ad1 == "" or ad2 == "":
+            self.label_7.setText(_translate("MainWindow","Üye İsim Soyismini kontrol edin"))
+        elif baslangic == bitis:
+            self.label_7.setText(_translate("MainWindow","Üyelik Bitiş Tarihi Hatalı"))
+        elif telno == "":
+            self.label_7.setText(_translate("MainWindow","Lütfen Telefon Numarası Giriniz"))
+        else:
+            df_dict = {"İsim Soyisim" : ad1 + ad2,
+                       "Üyelik Başlangıç Tarihi": baslangic,
+                       "Üyelik Bitiş Tarihi" :bitis,
+                       "Telefon Numarası": telno
+                       }
+            yeni_df = pd.DataFrame(df_dict,index=[0])
+            son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
+            son_df.to_excel(data_path,index=False)
+            self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
+            sleep(1)
+            self.label_7.setText(_translate("MainWindow",""))
+            self.clear_edit()
+            print(son_df)
+    def clear_edit(self):
+        self.lineEdit.clear()
+        self.lineEdit_2.clear()
+        self.lineEdit_3.clear()
+        #self.bitis_gun = 
 
 
 
