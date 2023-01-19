@@ -4,6 +4,7 @@ from threading import Thread
 import pandas as pd
 from time import sleep
 import logging
+debug = 1
 try:
     with open("programlog.log","r") as f:
         pass
@@ -18,11 +19,16 @@ logger = logging.getLogger(__name__)
 logging.info("program %s: starting", "Dsi-kayit")
 
 data_path = "uye_kayitlari.xlsx"
-uyedf = pd.read_excel(data_path, index_col=None)
+
 class Ui_MainWindow(object):
+    def __init__(self) -> None:
+        self.uyelik = 0
+        self.uyeliky = 0
     def setupUi(self, MainWindow):
         self.today = date.today()
         self.gun = [int(x) for x in self.today.strftime("%d/%m/%Y").split("/")]
+    
+
         self.bitis_gun = [int(x) for x in self.today.strftime("%d/%m/%Y").split("/")]
         MainWindow.setObjectName("Main Window")
         MainWindow.resize(613, 270)
@@ -66,13 +72,14 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.label_4.setFont(font)
         self.label_4.setObjectName("label_4")
-        self.dateEdit_2 = QtWidgets.QDateEdit(self.centralwidget)
-        self.dateEdit_2.setGeometry(QtCore.QRect(470, 50, 110, 26))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.dateEdit_2.setFont(font)
-        self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.bitis_gun[2], self.bitis_gun[1], self.bitis_gun[0]), QtCore.QTime(1, 0, 0)))
-        self.dateEdit_2.setObjectName("dateEdit_2")
+        self.label_8 = QtWidgets.QLabel(self.centralwidget)
+        self.label_8.setGeometry(QtCore.QRect(470, 40, 141, 41))
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.label_8.setFont(font)
+        self.label_8.setObjectName("label_3")
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(470, 90, 92, 23))
         font = QtGui.QFont()
@@ -136,38 +143,34 @@ class Ui_MainWindow(object):
         self.checkBox_2.stateChanged.connect(self.aylik3)
         self.checkBox_3.stateChanged.connect(self.aylik6)
         self.checkBox_4.stateChanged.connect(self.yillik)
-        self.pushButton.clicked.connect(self.kayit_t)
+        self.pushButton.clicked.connect(self.kayit)
      #######################
-    def aylik1(self,int):
-        if self.checkBox.isChecked():
-            self.bitis_gun[1] = self.bitis_gun[1] + 1
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.bitis_gun[2], self.bitis_gun[1], self.bitis_gun[0]), QtCore.QTime(1, 0, 0)))
+    def date(self,ay=0,yil=0):
+        return str(self.gun[0])+"/"+str(self.gun[1]+ay)+"/"+str(self.gun[2]+yil)
+    def aylik1(self,x):
+        if x:
+            self.uyelik = 1
+            self.label_8.setText(self.date(1))
         else:
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.gun[2], self.gun[1], self.gun[0]), QtCore.QTime(1, 0, 0)))    
-    def aylik3(self,int):
-        if self.checkBox_2.isChecked():
-            self.bitis_gun[1] = self.bitis_gun[1] + 3
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.bitis_gun[2], self.bitis_gun[1], self.bitis_gun[0]), QtCore.QTime(1, 0, 0)))
+            self.label_8.setText(self.date())
+    def aylik3(self,x):
+        if x:
+            self.uyelik = 3
+            self.label_8.setText(self.date(3))
         else:
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.gun[2], self.gun[1], self.gun[0]), QtCore.QTime(1, 0, 0)))
-    def aylik6(self,int):
-        if self.checkBox_3.isChecked():
-            self.bitis_gun[1] = self.bitis_gun[1] + 6
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.bitis_gun[2], self.bitis_gun[1], self.bitis_gun[0]), QtCore.QTime(1, 0, 0)))
-    
+            self.label_8.setText(self.date())
+    def aylik6(self,x):
+        if x:
+            self.uyelik = 6
+            self.label_8.setText(self.date(6))
         else:
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.gun[2], self.gun[1], self.gun[0]), QtCore.QTime(1, 0, 0)))
-            #self.bitis_gun = self.gun
-
-    def yillik(self,int):
-        if self.checkBox_4.isChecked():
-            self.bitis_gun[2] = self.bitis_gun[2] + 1
-            #print(self.bitis_gun)
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.bitis_gun[2], self.bitis_gun[1], self.bitis_gun[0]), QtCore.QTime(1, 0, 0)))
+            self.label_8.setText(self.date())
+    def yillik(self,x):
+        if x:
+            self.uyeliky = 1
+            self.label_8.setText(self.date(0,1))
         else:
-            self.dateEdit_2.setDateTime(QtCore.QDateTime(QtCore.QDate(self.gun[2], self.gun[1], self.gun[0]), QtCore.QTime(1, 0, 0)))
-    #####################
-
+            self.label_8.setText(self.date())
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Dsi Üye Kayıt"))
@@ -182,10 +185,9 @@ class Ui_MainWindow(object):
         self.checkBox_3.setText(_translate("MainWindow", "6 Aylık"))
         self.checkBox_4.setText(_translate("MainWindow", "Yıllık"))
         self.label_7.setText(_translate("MainWindow",""))
-    def kayit_t(self):
-        k = Thread(target=self.kayit)
-        k.start()
+        self.label_8.setText(_translate("Main Window", self.date()))
     def kayit(self):
+        uyedf = pd.read_excel(data_path, index_col=None)
         _translate = QtCore.QCoreApplication.translate
         #yeni_df["Üyelik Başlangıç Tarihi"] = 
         #yeni_df["Üyelik Bitiş Tarihi"] = 
@@ -193,20 +195,35 @@ class Ui_MainWindow(object):
         ad1 = self.lineEdit.text()
         ad2 = self.lineEdit_2.text()
         baslangic = str(self.gun[0])+"-"+str(self.gun[1])+"-"+str(self.gun[2])
-        bitis = str(self.bitis_gun[0])+"-"+str(self.bitis_gun[1])+"-"+str(self.bitis_gun[2])
+        bitis = str(self.bitis_gun[0])+"-"+str(self.bitis_gun[1]+self.uyelik)+"-"+str(self.bitis_gun[2]+self.uyeliky)
         telno = str(self.lineEdit_3.text())
-        if ad1 == "" or ad2 == "":
-            self.label_7.setText(_translate("MainWindow","Üye İsim Soyismini kontrol edin"))
-        elif baslangic == bitis:
-            self.label_7.setText(_translate("MainWindow","Üyelik Bitiş Tarihi Hatalı"))
-        elif telno == "":
-            self.label_7.setText(_translate("MainWindow","Lütfen Telefon Numarası Giriniz"))
+        if not debug:
+            if ad1 == "" or ad2 == "":
+                self.label_7.setText(_translate("MainWindow","Üye İsim Soyismini kontrol edin"))
+            elif baslangic == bitis:
+                self.label_7.setText(_translate("MainWindow","Üyelik Bitiş Tarihi Hatalı"))
+            elif telno == "":
+                self.label_7.setText(_translate("MainWindow","Lütfen Telefon Numarası Giriniz"))
+            else:
+                df_dict = {"İsim Soyisim" : ad1 + ad2,
+                        "Üyelik Başlangıç Tarihi": baslangic,
+                        "Üyelik Bitiş Tarihi" :bitis,
+                        "Telefon Numarası": telno
+                        }
+                yeni_df = pd.DataFrame(df_dict,index=[0])
+                son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
+                son_df.to_excel(data_path,index=False)
+                self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
+                sleep(1)
+                self.label_7.setText(_translate("MainWindow",""))
+                self.clear_edit()
+                print(son_df)
         else:
             df_dict = {"İsim Soyisim" : ad1 + ad2,
-                       "Üyelik Başlangıç Tarihi": baslangic,
-                       "Üyelik Bitiş Tarihi" :bitis,
-                       "Telefon Numarası": telno
-                       }
+                        "Üyelik Başlangıç Tarihi": baslangic,
+                        "Üyelik Bitiş Tarihi" :bitis,
+                        "Telefon Numarası": telno
+                        }
             yeni_df = pd.DataFrame(df_dict,index=[0])
             son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
             son_df.to_excel(data_path,index=False)
@@ -219,9 +236,11 @@ class Ui_MainWindow(object):
         self.lineEdit.clear()
         self.lineEdit_2.clear()
         self.lineEdit_3.clear()
-        #self.bitis_gun = 
-
-
+        self.checkBox.setCheckState(0)
+        self.checkBox_2.setCheckState(0)
+        self.checkBox_3.setCheckState(0)
+        self.checkBox_4.setCheckState(0)
+        self.uyelik,self.uyeliky = 0,0 
 
 
 if __name__ == "__main__":
