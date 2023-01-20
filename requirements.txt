@@ -2,3 +2,4 @@ pandas
 datetime
 numpy
 PyQt5
+openpyxl

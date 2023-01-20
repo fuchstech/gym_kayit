@@ -4,7 +4,7 @@ from threading import Thread
 import pandas as pd
 from time import sleep
 import logging
-debug = 1
+debug = 0
 try:
     with open("programlog.log","r") as f:
         pass
@@ -24,6 +24,7 @@ class Ui_MainWindow(object):
     def __init__(self) -> None:
         self.uyelik = 0
         self.uyeliky = 0
+        self.dosya_oku()
     def setupUi(self, MainWindow):
         self.today = date.today()
         self.gun = [int(x) for x in self.today.strftime("%d/%m/%Y").split("/")]
@@ -31,7 +32,7 @@ class Ui_MainWindow(object):
 
         self.bitis_gun = [int(x) for x in self.today.strftime("%d/%m/%Y").split("/")]
         MainWindow.setObjectName("Main Window")
-        MainWindow.resize(613, 270)
+        MainWindow.resize(750, 270)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(self.centralwidget)
@@ -105,8 +106,11 @@ class Ui_MainWindow(object):
         self.checkBox_4.setFont(font)
         self.checkBox_4.setObjectName("checkBox_4")
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(500, 190, 89, 25))
+        self.pushButton.setGeometry(QtCore.QRect(500, 200, 89, 25))
         self.pushButton.setObjectName("pushButton")
+        self.pushButtonuzat = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonuzat.setGeometry(QtCore.QRect(600, 200, 89, 25))
+        self.pushButtonuzat.setObjectName("pushButtonuzat")
         self.lineEdit_3 = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_3.setGeometry(QtCore.QRect(120, 130, 113, 25))
         self.lineEdit_3.setObjectName("lineEdit_3")
@@ -144,7 +148,12 @@ class Ui_MainWindow(object):
         self.checkBox_3.stateChanged.connect(self.aylik6)
         self.checkBox_4.stateChanged.connect(self.yillik)
         self.pushButton.clicked.connect(self.kayit)
+        self.pushButtonuzat.clicked.connect(self.listeden_sec)
      #######################
+        self.listWidget = QtWidgets.QListWidget(self.centralwidget)
+        self.listWidget.setGeometry(QtCore.QRect(600, 0, 130, 200))
+        self.liste_goster()
+        #self.listeden_sec()
     def date(self,ay=0,yil=0):
         return str(self.gun[0])+"/"+str(self.gun[1]+ay)+"/"+str(self.gun[2]+yil)
     def aylik1(self,x):
@@ -181,13 +190,28 @@ class Ui_MainWindow(object):
         self.checkBox.setText(_translate("MainWindow", "1 Aylık"))
         self.checkBox_2.setText(_translate("MainWindow", "3 Aylık"))
         self.pushButton.setText(_translate("MainWindow", "Kaydet"))
+        self.pushButtonuzat.setText(_translate("MainWindow","Üyelik Uzat"))
         self.label_5.setText(_translate("MainWindow", "        Tel No"))
         self.checkBox_3.setText(_translate("MainWindow", "6 Aylık"))
         self.checkBox_4.setText(_translate("MainWindow", "Yıllık"))
         self.label_7.setText(_translate("MainWindow",""))
         self.label_8.setText(_translate("Main Window", self.date()))
+    def listeden_sec(self):
+        try:
+            self.lineEdit.setText(str(self.listWidget.currentItem().text()).split(" ")[0])
+            self.lineEdit_2.setText(str(self.listWidget.currentItem().text()).split(" ")[1])
+            self.lineEdit_3.setText(str(self.listWidget.currentItem().text()).split(" ")[-1])
+        except AttributeError:
+            self.label_7.setText("Lütfen Seçim Yapın")
+    def liste_goster(self):
+        try:
+            for i,j,k in zip(self.uyedf["İsim"],self.uyedf["Soyisim"],self.uyedf["Telefon Numarası"]):
+                QtWidgets.QListWidget.addItem(self.listWidget,f"{i} {j}      {k}")
+        except KeyError as err:
+            logger.error(err)
+    def dosya_oku(self):
+        self.uyedf = pd.read_excel(data_path, index_col=None)
     def kayit(self):
-        uyedf = pd.read_excel(data_path, index_col=None)
         _translate = QtCore.QCoreApplication.translate
         #yeni_df["Üyelik Başlangıç Tarihi"] = 
         #yeni_df["Üyelik Bitiş Tarihi"] = 
@@ -211,7 +235,7 @@ class Ui_MainWindow(object):
                         "Telefon Numarası": telno
                         }
                 yeni_df = pd.DataFrame(df_dict,index=[0])
-                son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
+                son_df =pd.concat([self.uyedf,yeni_df], ignore_index=True)
                 son_df.to_excel(data_path,index=False)
                 self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
                 sleep(1)
@@ -219,20 +243,38 @@ class Ui_MainWindow(object):
                 self.clear_edit()
                 print(son_df)
         else:
-            df_dict = {"İsim Soyisim" : ad1 + ad2,
-                        "Üyelik Başlangıç Tarihi": baslangic,
-                        "Üyelik Bitiş Tarihi" :bitis,
-                        "Telefon Numarası": telno
-                        }
-            yeni_df = pd.DataFrame(df_dict,index=[0])
-            son_df =pd.concat([uyedf,yeni_df], ignore_index=True)
-            son_df.to_excel(data_path,index=False)
-            self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
-            sleep(1)
-            self.label_7.setText(_translate("MainWindow",""))
-            self.clear_edit()
-            print(son_df)
+            if (ad1 in self.uyedf["İsim"].to_list()) and (ad2 in self.uyedf["Soyisim"].to_list()):
+                self.selected_row = self.uyedf.loc[(self.uyedf["İsim"]==ad1) & (self.uyedf["Soyisim"]==ad2)]
+                #print(self.selected_row)
+                self.uyedf = self.uyedf.drop(self.selected_row.index[0])
+                print(self.uyedf)
+                df_dict = {"İsim" : ad1 ,"Soyisim":ad2,
+                            "Üyelik Başlangıç Tarihi": baslangic,
+                            "Üyelik Bitiş Tarihi" :bitis,
+                            "Telefon Numarası": telno
+                            }
+                yeni_df = pd.DataFrame(df_dict,index=[0])
+                son_df =pd.concat([self.uyedf,yeni_df], ignore_index=True)
+                son_df.to_excel(data_path,index=False)
+                self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
+                self.label_7.setText(_translate("MainWindow",""))
+                self.clear_edit()
+            else:
+                df_dict = {"İsim" : ad1 ,"Soyisim":ad2,
+                            "Üyelik Başlangıç Tarihi": baslangic,
+                            "Üyelik Bitiş Tarihi" :bitis,
+                            "Telefon Numarası": telno
+                            }
+                yeni_df = pd.DataFrame(df_dict,index=[0])
+                son_df =pd.concat([self.uyedf,yeni_df], ignore_index=True)
+                son_df.to_excel(data_path,index=False)
+                self.label_7.setText(_translate("MainWindow","Üye Başarıyla Kaydedildi"))
+                self.label_7.setText(_translate("MainWindow",""))
+                Thread(target=self.clear_edit).start()
+                print(son_df)
+
     def clear_edit(self):
+        sleep(1)
         self.lineEdit.clear()
         self.lineEdit_2.clear()
         self.lineEdit_3.clear()
@@ -241,7 +283,8 @@ class Ui_MainWindow(object):
         self.checkBox_3.setCheckState(0)
         self.checkBox_4.setCheckState(0)
         self.uyelik,self.uyeliky = 0,0 
-
+        self.listWidget.clear()
+        self.liste_goster()
 
 if __name__ == "__main__":
     import sys
